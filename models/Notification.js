@@ -7,6 +7,8 @@ const notificationSchema = new mongoose.Schema({
   type:      { type: String,  required: true, enum: ['ALL','TXT','AESPA', 'IU','RIIZE','IVE'] },
   title:     { type: String,  required: true },
   message:   { type: String,  required: true },
+  dayTime:   { type: String,  required: true },
+  batch :    { type: Number,  required: true },
   payload:   { type: Object,  default: {} },
   isRead:    { type: Boolean, default: false },
   createdAt: { type: Date,    default: Date.now, index: -1 }

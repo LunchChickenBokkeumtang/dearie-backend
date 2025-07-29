@@ -4,9 +4,11 @@ const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   userId:    { type: String,  required: true, index: true },
-  type:      { type: String,  required: true, enum: ['ALL','TXT','ASEPA', 'IU','RIIZE','IVE'] },
+  type:      { type: String,  required: true, enum: ['ALL','TXT','AESPA', 'IU','RIIZE','IVE'] },
   title:     { type: String,  required: true },
   message:   { type: String,  required: true },
+  dayTime:   { type: String,  required: true },
+  batch :    { type: Number,  required: true },
   payload:   { type: Object,  default: {} },
   isRead:    { type: Boolean, default: false },
   createdAt: { type: Date,    default: Date.now, index: -1 }
