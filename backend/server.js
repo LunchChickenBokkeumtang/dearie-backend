@@ -21,6 +21,15 @@ app.use((req, _res, next) => {
   if (req.headers.origin) console.log('Incoming Origin =>', req.headers.origin);
   next();
 });
+app.get('/debug/cors', (req, res) => {
+  res.json({
+    raw: process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGIN || '',
+    parsed: allowedOrigins,
+    incoming: req.headers.origin || null,
+    runningFrom: __dirname
+  });
+});
+
 
 const corsOptions = {
   origin(origin, cb) {
