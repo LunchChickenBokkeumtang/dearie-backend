@@ -1,50 +1,54 @@
 // server.js
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
-// 모델 불러오기
 const Notification = require('./models/Notification');
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-// ✅ CORS 설정
-const rawAllowed = process.env.ALLOWED_ORIGINS || '';
+/* -------------------- CORS (한 번만!) -------------------- */
+const rawAllowed =
+  process.env.ALLOWED_ORIGINS ||
+  process.env.CORS_ORIGIN || ''; // 옛 키도 지원
+
 const allowedOrigins = rawAllowed.split(',').map(s => s.trim()).filter(Boolean);
 
-const corsOptions = {
-  origin(origin, callback) {
-    if (!origin) return callback(null, true); // 서버-서버, Postman 등 허용
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
-  credentials: true
-};
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+// 디버그 로그
+console.log('ALLOWED_ORIGINS =>', allowedOrigins);
+app.use((req, _res, next) => {
+  if (req.headers.origin) console.log('Incoming Origin =>', req.headers.origin);
+  next();
+});
 
-// ✅ JSON 파서
+const corsOptions = {
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);              // 서버-서버/포스트맨 허용
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));                 // 프리플라이트
+/* -------------------------------------------------------- */
+
 app.use(express.json());
 
-// ✅ MongoDB 연결
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('🎉 MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ 헬스체크
-app.get('/', (req, res) => {
-  res.send('OK');
-});
+app.get('/', (_req, res) => res.send('OK'));
 
-// ✅ 알림 조회
 app.get('/api/notifications', async (req, res) => {
   const { userId } = req.query;
-  if (!userId) {
-    return res.status(400).json({ error: 'userId query parameter is required' });
-  }
+  if (!userId) return res.status(400).json({ error: 'userId query parameter is required' });
   try {
     const list = await Notification.find({ userId }).sort({ createdAt: -1 });
     res.json(list);
@@ -54,7 +58,6 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
-// ✅ 읽음 처리
 app.patch('/api/notifications/:id/read', async (req, res) => {
   try {
     await Notification.findByIdAndUpdate(req.params.id, { isRead: true });
@@ -65,7 +68,6 @@ app.patch('/api/notifications/:id/read', async (req, res) => {
   }
 });
 
-// ✅ 서버 실행
 app.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Server listening on http://0.0.0.0:${port}`);
 });
